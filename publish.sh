@@ -11,5 +11,6 @@ git pull origin master &&
 npm install --strict-ssl=false && \
 npm run lint && \
 npm test && \
+npm run build && \
 npm publish --strict-ssl=false && \
 git tag $PACKAGE_VERSION && git push --tag

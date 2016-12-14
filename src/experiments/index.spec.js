@@ -72,7 +72,7 @@ test('addExperiment: should call experiment setVariantProviderContext with the c
         const experiment = Experiment.define('someExperiment');
         sinon.stub(experiment, 'setVariantProviderContext');
         experiments.addExperiment(experiment);
-        t.is(experiment.setVariantProviderContext.calledWith('some context', false), true);
+        t.is(experiment.setVariantProviderContext.calledWith('some context'), true);
     });
 
 test('addExperiment: should call experiment setConditionProviderContext with the context if exists',
@@ -82,7 +82,7 @@ test('addExperiment: should call experiment setConditionProviderContext with the
         const experiment = Experiment.define('someExperiment');
         sinon.stub(experiment, 'setConditionContext');
         experiments.addExperiment(experiment);
-        t.is(experiment.setConditionContext.calledWith('some context', false), true);
+        t.is(experiment.setConditionContext.calledWith('some context'), true);
     });
 
 test('should return an instance of Experiments', (t) => {
