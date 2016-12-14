@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 
-import { Variant, Experiments } from '../';
+import Variant from '../variant';
+import Experiments from '../experiments';
 
 class Experiment {
 
@@ -242,7 +243,6 @@ class Experiment {
      * Returns the current "live" variant. It calls variantProvider to get the variant name.
      * The variantProvider should either returns a string or return a promise that resolves to
      * a string.
-     * @param {Array<string>} fieldsList
      * @returns {Promise<string>|null}
      */
     getLiveVariant() {

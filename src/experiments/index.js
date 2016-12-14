@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
-import { Experiment, Variant } from '../';
+import Experiment from '../experiment/index';
+import Variant from '../variant/index';
 
 const DEFAULT_PREFIX = 'ab';
-const DO_NOT_OVERRIDE = false;
 
 class Experiments {
 
@@ -70,10 +70,10 @@ class Experiments {
         this._experiments[experiment.name] = experiment;
         // If experiments are added after the context has been set, it will be added to them
         if (this._variantProviderContext) {
-            experiment.setVariantProviderContext(this._variantProviderContext, DO_NOT_OVERRIDE);
+            experiment.setVariantProviderContext(this._variantProviderContext);
         }
         if (this._conditionContext) {
-            experiment.setConditionContext(this._conditionContext, DO_NOT_OVERRIDE);
+            experiment.setConditionContext(this._conditionContext);
         }
         return this;
     }
@@ -171,8 +171,7 @@ class Experiments {
         Object.keys(this._experiments)
             .forEach(
                 (experimentName) => {
-                    this._experiments[experimentName].setVariantProviderContext(context,
-                        DO_NOT_OVERRIDE);
+                    this._experiments[experimentName].setVariantProviderContext(context);
                 }
             );
     }
@@ -186,7 +185,7 @@ class Experiments {
         Object.keys(this._experiments)
             .forEach(
                 (experimentName) => {
-                    this._experiments[experimentName].setConditionContext(context, DO_NOT_OVERRIDE);
+                    this._experiments[experimentName].setConditionContext(context);
                 }
             );
     }
