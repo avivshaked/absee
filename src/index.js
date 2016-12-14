@@ -1,9 +1,10 @@
-import Experiments from './experiments';
-import Experiment from './experiment';
-import Variant from './variant';
+import Experiments from './experiments/index';
+import Experiment from './experiment/index';
+import Variant from './variant/index';
 
-export {
+export default {
     Experiments,
     Experiment,
     Variant,
 };
+

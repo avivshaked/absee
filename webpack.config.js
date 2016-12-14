@@ -10,6 +10,7 @@ const config = {
     entry: './src/index.js',
     output: {
         path: __dirname,
+        libraryTarget: 'commonjs2',
         filename: '/dist/index.js',
     },
     module: {
