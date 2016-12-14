@@ -1,0 +1,9 @@
+
+/node_modules/
+/src/
+/.npmignore
+/.eslintrc.js
+/.gitignore
+/publish.sh
+/webpack.config.js
+/.babelrc
