@@ -1,4 +1,4 @@
-import { Experiment } from '../';
+import Experiment from '../experiment/index';
 
 class Variant {
 
