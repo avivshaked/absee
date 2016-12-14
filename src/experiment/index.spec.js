@@ -1,7 +1,7 @@
 import test from 'ava';
 import sinon from 'sinon';
 import Experiment from './';
-import { Variant, Experiments } from '../';
+import { Variant } from '../';
 
 let env;
 test.beforeEach(() => {
@@ -13,77 +13,85 @@ test.afterEach(() => {
     process.env.NODE_ENV = env;
 });
 
-test('_throwError should do nothing when in production env', (t) => {
+test('_throwError should call logger when in production', (t) => {
     process.env.NODE_ENV = 'production';
-    Experiment._throwError();
-    t.pass('No errors were thrown');
+    const error = sinon.stub();
+    const experiment = Experiment.define('someExperiment');
+    experiment._logger = { error };
+    experiment._throwError(Error, 'some message');
+    t.is(experiment._logger.error.calledWith('some message'), true);
 });
 
 test('_throwError should throw when not in production', (t) => {
-    t.throws(() => Experiment._throwError(), Error);
+    const experiment = Experiment.define('someExperiment');
+    t.throws(() => experiment._throwError(), Error);
 });
 
 test('_throwError should throw Error Type of the received error type', (t) => {
-    t.throws(() => Experiment._throwError(RangeError), RangeError);
+    const experiment = Experiment.define('someExperiment');
+    t.throws(() => experiment._throwError(RangeError), RangeError);
 });
 
 test('_throwError should throw an error message based on the received error message', (t) => {
-    t.throws(() => Experiment._throwError(RangeError, 'test error message'), 'test error message');
+    const experiment = Experiment.define('someExperiment');
+    t.throws(() => experiment._throwError(RangeError, 'test error message'), 'test error message');
 });
 
 test('_validateName should call _throwError if name property is invalid', (t) => {
-    sinon.stub(Experiment, '_throwError');
-    Experiment._validateName({ not: 'a string' }, 'errMsg');
-    t.is(Experiment._throwError.called, true, '_throwError was called');
-    t.is(Experiment._throwError.args[0][0], TypeError, '_throwError was called with TypeError');
-    t.regex(Experiment._throwError.args[0][1], /"name" must be a string/);
-    Experiment._throwError.reset();
-    Experiment._validateName('', 'errMsg');
-    t.is(Experiment._throwError.called, true, '_throwError was called');
-    t.is(Experiment._throwError.args[0][0], RangeError, '_throwError was called with RangeError');
-    t.regex(Experiment._throwError.args[0][1], /"name" must not be an empty string/);
-    Experiment._throwError.restore();
+    const experiment = Experiment.define('someExperiment');
+    sinon.stub(experiment, '_throwError');
+    experiment._validateName({ not: 'a string' }, 'errMsg');
+    t.is(experiment._throwError.called, true, '_throwError was called');
+    t.is(experiment._throwError.args[0][0], TypeError, '_throwError was called with TypeError');
+    t.regex(experiment._throwError.args[0][1], /"name" must be a string/);
+    experiment._throwError.reset();
+    experiment._validateName('', 'errMsg');
+    t.is(experiment._throwError.called, true, '_throwError was called');
+    t.is(experiment._throwError.args[0][0], RangeError, '_throwError was called with RangeError');
+    t.regex(experiment._throwError.args[0][1], /"name" must not be an empty string/);
 });
 
+
 test('_validateVariant should call _throwError if variant is invalid', (t) => {
-    sinon.stub(Experiment, '_throwError');
+    const experiment = Experiment.define('someExperiment');
+    sinon.stub(experiment, '_throwError');
     const variant = 'not a variant';
-    Experiment._validateVariant(variant);
-    t.is(Experiment._throwError.called, true, '_throwError was called');
-    t.is(Experiment._throwError.args[0][0], TypeError, '_throwError was called with TypeError');
-    t.regex(Experiment._throwError.args[0][1], /"variant" must be an instance of Variant/);
-    Experiment._throwError.restore();
+    experiment._validateVariant(variant);
+    t.is(experiment._throwError.called, true, '_throwError was called');
+    t.is(experiment._throwError.args[0][0], TypeError, '_throwError was called with TypeError');
+    t.regex(experiment._throwError.args[0][1], /"variant" must be an instance of Variant/);
+    experiment._throwError.restore();
 });
 
 test('_validateExperiments should call _throwError if experiments is invalid', (t) => {
-    sinon.stub(Experiment, '_throwError');
+    const experiment = Experiment.define('someExperiment');
+    sinon.stub(experiment, '_throwError');
     const experiments = 'not a experiments';
-    Experiment._validateExperiments(experiments);
-    t.is(Experiment._throwError.called, true, '_throwError was called');
-    t.is(Experiment._throwError.args[0][0], TypeError, '_throwError was called with TypeError');
-    t.regex(Experiment._throwError.args[0][1], /"experiments" must be an instance of Experiments/);
-    Experiment._throwError.restore();
+    experiment._validateExperiments(experiments);
+    t.is(experiment._throwError.called, true, '_throwError was called');
+    t.is(experiment._throwError.args[0][0], TypeError, '_throwError was called with TypeError');
+    t.regex(experiment._throwError.args[0][1], /"experiments" must be an instance of Experiments/);
+    experiment._throwError.restore();
 });
 
 test('_validateCondition should call _throwError if condition property is invalid', (t) => {
-    sinon.stub(Experiment, '_throwError');
-    Experiment._validateCondition('not a function or boolean', 'errMsg');
-    t.is(Experiment._throwError.called, true, '_throwError was called');
-    t.is(Experiment._throwError.args[0][0], TypeError, '_throwError was called with TypeError');
-    t.regex(Experiment._throwError.args[0][1],
+    const experiment = Experiment.define('someExperiment');
+    sinon.stub(experiment, '_throwError');
+    experiment._validateCondition('not a function or boolean', 'errMsg');
+    t.is(experiment._throwError.called, true, '_throwError was called');
+    t.is(experiment._throwError.args[0][0], TypeError, '_throwError was called with TypeError');
+    t.regex(experiment._throwError.args[0][1],
         /"condition" property must be a function or a boolean/);
-    Experiment._throwError.restore();
+    experiment._throwError.restore();
 });
 
 test('constructor: should validate "name" and return an instance', (t) => {
-    sinon.stub(Experiment, '_validateName');
+    sinon.stub(Experiment.prototype, '_validateName');
     const instance = Experiment.define('experiment');
-    t.is(Experiment._validateName.called, true, '_validateName is called');
+    t.is(instance._validateName.called, true, '_validateName is called');
     t.is(instance instanceof Experiment, true, 'an instance is returned');
-    t.is(instance instanceof Experiment, true, 'an instance is returned');
-    // t.is(instance._name, 'experiment');
     t.is(instance.name, 'experiment');
-    Experiment._validateName.restore();
+    Experiment.prototype._validateName.restore();
 });
 
 test('addVariant: should add a new variant', (t) => {
@@ -111,33 +119,6 @@ test('getVariant: should return the requested variant or null', (t) => {
     t.is(experiment.getVariant('someVariantThatDoesntExist'), null);
 });
 
-test('getFeaturesMap: should call variant\'s getFeaturesMap', (t) => {
-    const variant = Variant.define('someVariant');
-    sinon.stub(variant, 'registerExperiment');
-    const experiment = Experiment.define('someExperiment').addVariant(variant);
-    sinon.stub(variant, 'getFeaturesMap');
-    experiment.getFeaturesMap('someVariant');
-    t.is(variant.getFeaturesMap.called, true);
-});
-
-test('getFeaturesMap: should return variant\'s getFeaturesMap if variant is found', (t) => {
-    const variant = Variant.define('someVariant');
-    sinon.stub(variant, 'registerExperiment');
-    const experiment = Experiment.define('someExperiment').addVariant(variant);
-    const returnedObj = { showSomeFeature: true };
-    sinon.stub(variant, 'getFeaturesMap', () => returnedObj);
-    t.is(experiment.getFeaturesMap('someVariant'), returnedObj);
-});
-
-test('getFeaturesMap: should return an empty object if the variant is not found', (t) => {
-    const variant = Variant.define('someVariant');
-    sinon.stub(variant, 'registerExperiment');
-    const experiment = Experiment.define('someExperiment').addVariant(variant);
-    const returnedObj = { showSomeFeature: true };
-    sinon.stub(variant, 'getFeaturesMap', () => returnedObj);
-    t.deepEqual(experiment.getFeaturesMap('someNonExistingVariant'), {});
-});
-
 test('get config: should return a copy of the current config if no "experiments" is registered',
     (t) => {
         const experiment = Experiment.define('someExperiment', { prop: 'value' });
@@ -147,42 +128,24 @@ test('get config: should return a copy of the current config if no "experiments"
             'returns a config that is not the original object');
     });
 
-test(
-    'get config: should return the current config merged with the "experiments" config if registered',
-    (t) => {
-        const defaultConfig = Experiments._defaultConfig;
-        Experiments._defaultConfig = {};
-        const experiment = Experiment.define('someExperiment', { propB: 'some other value' });
-        sinon.stub(Experiments, '_validateExperiment');
-        Experiments.define({ propA: 'some value', propB: 'some value' })
-            .addExperiment(experiment);
-
-        t.deepEqual(experiment.config, { propA: 'some value', propB: 'some other value' });
-        Experiments._defaultConfig = defaultConfig;
-        Experiments._validateExperiment.restore();
-    });
-
 test('setCondition: should call validateCondition with the set condition', (t) => {
-    sinon.stub(Experiment, '_validateCondition');
     const experiment = Experiment.define('experiment');
+    sinon.stub(experiment, '_validateCondition');
     experiment.setCondition('someCondition');
-    t.is(Experiment._validateCondition.calledWith('someCondition'), true);
-    Experiment._validateCondition.restore();
+    t.is(experiment._validateCondition.calledWith('someCondition'), true);
 });
 
 test('setCondition: should add a condition to the experiment', (t) => {
-    sinon.stub(Experiment, '_validateCondition');
     const experiment = Experiment.define('experiment');
+    sinon.stub(experiment, '_validateCondition');
     experiment.setCondition('someCondition');
     t.is(experiment._condition, 'someCondition');
-    Experiment._validateCondition.restore();
 });
 
 test('setCondition: should return the instance', (t) => {
-    sinon.stub(Experiment, '_validateCondition');
     const experiment = Experiment.define('experiment');
+    sinon.stub(experiment, '_validateCondition');
     t.is(experiment.setCondition('someCondition'), experiment);
-    Experiment._validateCondition.restore();
 });
 
 test('setConditionContext: should store received argument in _conditionContext', (t) => {
@@ -195,14 +158,6 @@ test('setConditionContext: should return the experiment instance', (t) => {
     const experiment = Experiment.define('experiment');
     t.is(experiment.setConditionContext('some context'), experiment);
 });
-
-test('setConditionContext: should not set condition if shouldOverride argument is set to false',
-    (t) => {
-        const experiment = Experiment.define('experiment');
-        experiment._conditionContext = 'some old context';
-        experiment.setConditionContext('some new context', false);
-        t.is(experiment._conditionContext, 'some old context');
-    });
 
 test('get condition: should return true if no condition was set', (t) => {
     const experiment = Experiment.define('experiment');
@@ -254,14 +209,6 @@ test('setVariantProviderContext: should return the instance', (t) => {
     const experiment = Experiment.define('experiment');
     t.is(experiment.setVariantProviderContext('some context'), experiment);
 });
-
-test('setVariantProviderContext: should not set context if shouldOverride argument is set to false',
-    (t) => {
-        const experiment = Experiment.define('experiment');
-        experiment._variantProviderContext = 'some old context';
-        experiment.setVariantProviderContext('some new context', false);
-        t.is(experiment._variantProviderContext, 'some old context');
-    });
 
 test('getLiveVariant: should return a promise that resolves to null if ' +
     'condition evaluates to false', async (t) => {
@@ -347,3 +294,16 @@ test('getLiveExperiment: should return an object with the experiment name and re
             a: 'some value',
         });
     });
+
+test('getVariantState: should return variant.state', (t) => {
+    const experiment = Experiment.define('experiment');
+    const state1 = { state: 1 };
+    const state2 = { state: 2 };
+    const variant1 = Variant.define('variant1', state1);
+    const variant2 = Variant.define('variant2', state2);
+    experiment
+        .addVariant(variant1)
+        .addVariant(variant2);
+
+    t.deepEqual(experiment.getVariantState('variant1'), state1);
+});

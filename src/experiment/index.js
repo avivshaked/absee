@@ -13,9 +13,13 @@ class Experiment {
      * @param {string?} errMsg
      * @private
      */
-    static _throwError(ErrorType, errMsg) {
-        if (process.env.NODE_ENV === 'production') {
-            // TODO: log error
+    _throwError(ErrorType, errMsg) {
+        if (process && process.env && process.env.NODE_ENV === 'production') {
+            if (this._logger.error) {
+                this._logger.error(errMsg);
+            } else if (this._logger.log) {
+                this._logger.log(errMsg);
+            }
             return;
         }
         const Err = ErrorType || Error;
@@ -28,14 +32,14 @@ class Experiment {
      * @param {string} errMsg
      * @private
      */
-    static _validateName(name, errMsg) {
+    _validateName(name, errMsg) {
         if (typeof name !== 'string') {
-            Experiment._throwError(TypeError,
+            this._throwError(TypeError,
                 `${errMsg} "name" must be a string. it is: "${typeof name}`);
             return;
         }
         if (name.trim() === '') {
-            Experiment._throwError(RangeError,
+            this._throwError(RangeError,
                 `${errMsg} "name" must not be an empty string.`);
         }
     }
@@ -46,9 +50,9 @@ class Experiment {
      * @param {string} errMsg
      * @private
      */
-    static _validateVariant(variant, errMsg) {
+    _validateVariant(variant, errMsg) {
         if (!(variant instanceof Variant)) {
-            Experiment._throwError(TypeError,
+            this._throwError(TypeError,
                 `${errMsg} "variant" must be an instance of Variant.`);
         }
     }
@@ -59,9 +63,9 @@ class Experiment {
      * @param {string} errMsg
      * @private
      */
-    static _validateExperiments(experiments, errMsg) {
+    _validateExperiments(experiments, errMsg) {
         if (!(experiments instanceof Experiments)) {
-            Experiment._throwError(TypeError,
+            this._throwError(TypeError,
                 `${errMsg} "experiments" must be an instance of Experiments.`);
         }
     }
@@ -73,9 +77,9 @@ class Experiment {
      * @param {string} errMsg
      * @private
      */
-    static _validateCondition(condition, errMsg) {
+    _validateCondition(condition, errMsg) {
         if (typeof condition !== 'function' && typeof condition !== 'boolean') {
-            Experiment._throwError(TypeError,
+            this._throwError(TypeError,
                 `${errMsg} "condition" property must be a function or a boolean. it is: "${typeof condition}"`);
         }
     }
@@ -83,11 +87,11 @@ class Experiment {
     /**
      *
      * @param {string} name
-     * @param {{[key]: *}?} config
+     * @param {{logger?: Object, [key]: *}?} config
      */
     constructor(name, config = {}) {
         const errMsg = `${this._errMsg} constructor:`;
-        Experiment._validateName(name, errMsg);
+        this._validateName(name, errMsg);
         this._name = name;
         this._variants = {};
         this._config = config;
@@ -111,12 +115,6 @@ class Experiment {
      * @returns {{[key]: *}}
      */
     get config() {
-        if (this._experiments) {
-            return {
-                ...this._experiments.config,
-                ...this._config,
-            };
-        }
         return {
             ...this._config,
         };
@@ -154,7 +152,7 @@ class Experiment {
      * @returns {Experiment}
      */
     addVariant(variant) {
-        Experiment._validateVariant(variant, `${this._errMsg} addVariant:`);
+        this._validateVariant(variant, `${this._errMsg} addVariant:`);
         variant.registerExperiment(this);
         this._variants[variant.name] = variant;
         return this;
@@ -173,10 +171,10 @@ class Experiment {
      * @param {string} variantName
      * @returns {{[key]: boolean}}
      */
-    getFeaturesMap(variantName) {
+    getVariantState(variantName) {
         const variant = this.getVariant(variantName);
         if (variant) {
-            return variant.getFeaturesMap();
+            return variant.state;
         }
         return {};
     }
@@ -196,7 +194,7 @@ class Experiment {
      * @returns {Experiment}
      */
     setCondition(condition) {
-        Experiment._validateCondition(condition, `${this._errMsg} setCondition:`);
+        this._validateCondition(condition, `${this._errMsg} setCondition:`);
         this._condition = condition;
         return this;
     }
@@ -205,13 +203,9 @@ class Experiment {
      * The condition context, if present, will be used when evaluating the condition.
      * A condition function will be called with the context.
      * @param {*} conditionContext
-     * @param {boolean?} shouldOverride
      * @returns {Experiment}
      */
-    setConditionContext(conditionContext, shouldOverride = true) {
-        if (!shouldOverride && this._conditionContext) {
-            return this;
-        }
+    setConditionContext(conditionContext) {
         this._conditionContext = conditionContext;
         return this;
     }
@@ -228,13 +222,9 @@ class Experiment {
     /**
      * Sets a context to be used when getting the variant with variantProvider.
      * @param {*} variantProviderContext
-     * @param {boolean?} shouldOverride
      * @returns {Experiment}
      */
-    setVariantProviderContext(variantProviderContext, shouldOverride = true) {
-        if (!shouldOverride && this._variantProviderContext) {
-            return this;
-        }
+    setVariantProviderContext(variantProviderContext) {
         this._variantProviderContext = variantProviderContext;
         return this;
     }
