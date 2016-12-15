@@ -258,10 +258,10 @@ class Experiment {
 
     /**
      * Returns an object that describes the current "live" experiment.
-     * @param {Array<string>} fieldsList
+     * @param {Array<string>?} fieldsList
      * @returns {Promise.<{experimentName: string, variantName: string}>|null}
      */
-    getLiveExperiment(fieldsList) {
+    getLiveExperiment(fieldsList = []) {
         return Promise.resolve()
             .then(() => {
                 return this.getLiveVariant();

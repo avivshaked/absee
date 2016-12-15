@@ -212,12 +212,17 @@ class Experiments {
     static defineByObject({ config = {}, experiments = [] }) {
         try {
             const experimentsDef = Experiments.define(config);
-            for (const { experimentName, experimentConfig = {}, variants = [] } of experiments) {
+            for (const experimentDefObj of experiments) {
+                const experimentName = experimentDefObj.name;
+                const experimentConfig = experimentDefObj.config || {};
+                const variants = experimentDefObj.variants || [];
                 const experiment = Experiment.define(experimentName, experimentConfig);
                 // If experiment object has variants defined, create them
                 if (Array.isArray(variants)) {
-                    for (const { variantName, variantState = {}, variantConfig = {} } of
-                        variants) {
+                    for (const variantDefObj of variants) {
+                        const variantName = variantDefObj.name;
+                        const variantState = variantDefObj.state || {};
+                        const variantConfig = variantDefObj.config || {};
                         experiment.addVariant(
                             Variant.define(variantName, variantState, variantConfig)
                         );
