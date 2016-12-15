@@ -65,7 +65,7 @@ const experiments = Experiments.define()
 
 You can find an example in 'examples/creating-constructs-explicit-chaining/index.js'
 
-### Creating experiments construct with Explicit chaining
+### Creating experiments construct with config object
 The second way to create an experiments construct is with a config object, or a config file.
 The object can have a config property, and must have an experiments property.
 Experiments property is an array of objects, where each object is an experiment definition object.
