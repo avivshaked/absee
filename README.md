@@ -9,8 +9,8 @@ Table of contents
 * [Installation](#installation)
 * [Tests](#tests)
 * [Getting started](#getting-started)
-    * [Creating experiments construct with explicit chaining](creating-experiments-construct-with-explicit-chaining)
-    * [Creating experiments construct with config object](creating-experiments-construct-with-config-object)
+    * [Creating experiments construct with explicit chaining](#creating-experiments-construct-with-explicit-chaining)
+    * [Creating experiments construct with config object](#creating-experiments-construct-with-config-object)
 * [License](#License)
 
 
