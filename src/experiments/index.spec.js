@@ -93,21 +93,13 @@ test('should return an instance of Experiments', (t) => {
 });
 
 test('constructor: should return the correct instance with a duplicated config', (t) => {
-    const originalDefaultPrefix = Experiments._defaultConfig;
-    const config = { prop: 'value', prop2: 'value' };
-    Experiments._defaultConfig = config;
-
     let experiments = new Experiments();
-    t.deepEqual(experiments._config, config,
-        'with no config argument objects should have the same values');
-    t.not(experiments._config, config,
-        'with no config argument objects should not be the same object');
-
-    experiments = new Experiments({ prop2: 'other value' });
-    t.deepEqual(experiments._config, { prop: 'value', prop2: 'other value' },
+    t.deepEqual(experiments._config, {},
         'with no config argument objects should have the same values');
 
-    Experiments._defaultConfig = originalDefaultPrefix;
+    experiments = new Experiments({ prop: 'value' });
+    t.deepEqual(experiments._config, { prop: 'value' },
+        'with no config argument objects should have the same values');
 });
 
 test('get config: should return a copy of the instance _config', (t) => {
@@ -121,55 +113,55 @@ test('get config: should return a copy of the instance _config', (t) => {
     Experiments._defaultConfig = originalDefaultPrefix;
 });
 
-test('getExperimentsFeaturesMap: should return an empty object if liveExperiments argument ' +
+test('getExperimentsState: should return an empty object if liveExperiments argument ' +
     'is not an array', (t) => {
     const experiments = Experiments.define();
-    const featuresList = experiments.getExperimentsFeaturesMap('not an array');
+    const featuresList = experiments.getExperimentsState('not an array');
     t.deepEqual(featuresList, {});
 });
 
-test('getExperimentsFeaturesMap: should return an empty object if all the experiments ' +
+test('getExperimentsState: should return an empty object if all the experiments ' +
     'described have invalid properties', (t) => {
     const experiments = Experiments.define();
     let liveExperiments = [undefined, undefined];
-    let featuresList = experiments.getExperimentsFeaturesMap(liveExperiments);
+    let featuresList = experiments.getExperimentsState(liveExperiments);
     t.deepEqual(featuresList, {}, 'undefined experiments');
 
     liveExperiments = [{ variantName: 'variant' }, { variantName: 'variant' }];
-    featuresList = experiments.getExperimentsFeaturesMap(liveExperiments);
+    featuresList = experiments.getExperimentsState(liveExperiments);
     t.deepEqual(featuresList, {}, 'undefined experiment name');
     liveExperiments = [{ experimentName: 10, variantName: 'variant' },
         { experimentName: 10, variantName: 'variant' }];
-    featuresList = experiments.getExperimentsFeaturesMap(liveExperiments);
+    featuresList = experiments.getExperimentsState(liveExperiments);
     t.deepEqual(featuresList, {}, 'experiment name is not a string');
     liveExperiments = [{ experimentName: '', variantName: 'variant' },
         { experimentName: '', variantName: 'variant' }];
-    featuresList = experiments.getExperimentsFeaturesMap(liveExperiments);
+    featuresList = experiments.getExperimentsState(liveExperiments);
     t.deepEqual(featuresList, {}, 'experiment name is an empty string');
 
     liveExperiments = [{ experimentName: 'experiment' }, { experimentName: 'experiment' }];
-    featuresList = experiments.getExperimentsFeaturesMap(liveExperiments);
+    featuresList = experiments.getExperimentsState(liveExperiments);
     t.deepEqual(featuresList, {}, 'undefined variant name');
     liveExperiments = [{ experimentName: 'experiment', variantName: 10 },
         { experimentName: 'experiment', variantName: 10 }];
-    featuresList = experiments.getExperimentsFeaturesMap(liveExperiments);
+    featuresList = experiments.getExperimentsState(liveExperiments);
     t.deepEqual(featuresList, {}, 'variant name is not a string');
     liveExperiments = [{ experimentName: 'experiment', variantName: '' },
         { experimentName: 'experiment', variantName: '' }];
-    featuresList = experiments.getExperimentsFeaturesMap(liveExperiments);
+    featuresList = experiments.getExperimentsState(liveExperiments);
     t.deepEqual(featuresList, {}, 'variant name is an empty string');
 });
 
-test('getExperimentsFeaturesMap: should call getFeaturesMap for each valid experiment', (t) => {
+test('getExperimentsState: should call getVariantState for each valid experiment', (t) => {
     const experiments = Experiments.define();
-    sinon.stub(experiments, 'getFeaturesMap');
+    sinon.stub(experiments, 'getVariantState');
     const liveExperiments = [{ experimentName: 'exp1', variantName: 'var1' },
         { experimentName: 'exp2', variantName: 'var2' }];
-    experiments.getExperimentsFeaturesMap(liveExperiments);
-    t.is(experiments.getFeaturesMap.callCount, 2);
+    experiments.getExperimentsState(liveExperiments);
+    t.is(experiments.getVariantState.callCount, 2);
 });
 
-test('getExperimentsFeaturesMap: should returned a merged features list for all experiments',
+test('getExperimentsState: should returned a merged features list for all experiments',
     (t) => {
         const experiments = Experiments.define();
         let index = 0;
@@ -180,7 +172,7 @@ test('getExperimentsFeaturesMap: should returned a merged features list for all 
             hideFeature3: true,
             hideFeature4: true,
         }];
-        sinon.stub(experiments, 'getFeaturesMap', () => {
+        sinon.stub(experiments, 'getVariantState', () => {
             index += 1;
             return mockFeatures[index - 1];
         });
@@ -188,7 +180,7 @@ test('getExperimentsFeaturesMap: should returned a merged features list for all 
         const liveExperiments = [{ experimentName: 'exp1', variantName: 'var1' },
             { experimentName: 'exp2', variantName: 'var2' }];
 
-        t.deepEqual(experiments.getExperimentsFeaturesMap(liveExperiments), {
+        t.deepEqual(experiments.getExperimentsState(liveExperiments), {
             hideFeature1: true,
             hideFeature2: true,
             hideFeature3: true,
@@ -271,6 +263,23 @@ test('getLiveExperiments: should resolve on a list of all non null values', asyn
     const liveExperiments = await experiments.getLiveExperiments();
     t.deepEqual(liveExperiments, ['firstExperiment', 'thirdExperiment']);
 });
+
+test('getLiveExperiments: should resolve to an empty array if _config.isOff',
+    async (t) => {
+        const experiment1 = Experiment.define('firstExperiment');
+        const experiment2 = Experiment.define('secondExperiment');
+        const experiment3 = Experiment.define('thirdExperiment');
+        sinon.stub(experiment1, 'getLiveExperiment', () => Promise.resolve('firstExperiment'));
+        sinon.stub(experiment2, 'getLiveExperiment', () => Promise.resolve(null));
+        sinon.stub(experiment3, 'getLiveExperiment', () => Promise.resolve('thirdExperiment'));
+        const experiments = Experiments.define({ isOff: true })
+            .addExperiment(experiment1)
+            .addExperiment(experiment2)
+            .addExperiment(experiment3);
+
+        const liveExperiments = await experiments.getLiveExperiments();
+        t.deepEqual(liveExperiments, []);
+    });
 
 test('setVariantProviderContest: Should call setVariantProvider for each registered experiment',
     (t) => {

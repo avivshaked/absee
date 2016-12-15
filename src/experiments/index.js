@@ -2,8 +2,6 @@
 import Experiment from '../experiment/index';
 import Variant from '../variant/index';
 
-const DEFAULT_PREFIX = 'ab';
-
 class Experiments {
 
     _errMsg = 'Experiments:';
@@ -15,8 +13,12 @@ class Experiments {
      * @private
      */
     static _throwError(ErrorType, errMsg) {
-        if (process.env.NODE_ENV === 'production') {
-            // TODO: log error
+        if (process && process.env && process.env.NODE_ENV === 'production') {
+            if (this._logger.error) {
+                this._logger.error(errMsg);
+            } else if (this._logger.log) {
+                this._logger.log(errMsg);
+            }
             return;
         }
         const Err = ErrorType || Error;
@@ -36,22 +38,18 @@ class Experiments {
         }
     }
 
-    static _defaultConfig = {
-        prefix: DEFAULT_PREFIX,
-    };
-
     /**
      *
-     * @param {{[key]: *}?} config
+     * @param {{isOff: boolean, [key]: *}?} config
      */
-    constructor(config) {
+    constructor(config = {}) {
         this._experiments = {};
         this._config = {
-            ...Experiments._defaultConfig,
-            ...(config || {}),
+            ...config,
         };
         this._variantProviderContext = null;
         this._conditionContext = null;
+        this._logger = config.logger || console;
     }
 
     get config() {
@@ -84,22 +82,22 @@ class Experiments {
      * @param {string} experimentName
      * @param {string} variantName
      */
-    getFeaturesMap(experimentName, variantName) {
+    getVariantState(experimentName, variantName) {
         const experiment = this._experiments[experimentName];
         if (experiment) {
-            return experiment.getFeaturesMap(variantName);
+            return experiment.getVariantState(variantName);
         }
         return {};
     }
 
     /**
-     * Gets a list of "live" experiments, and returns an object with toggled features.
+     * Takes a list of "live" experiments, and returns an object with state.
      * If liveExperiments does not comply with the schema, an empty object is returned.
      * If an experiment in liveExperiments doesn't comply with the schema, it will be disregarded.
      * @param {Array<{experimentName: string, variantName: string}>} liveExperiments
-     * @returns {{[key]: boolean}}
+     * @returns {{[key]: *}}
      */
-    getExperimentsFeaturesMap(liveExperiments) {
+    getExperimentsState(liveExperiments) {
         if (Array.isArray(liveExperiments)) {
             return liveExperiments.reduce((oldFeaturesList, experiment) => {
                 // Validate 'experiment' argument. Make sure it has the proper properties.
@@ -113,7 +111,7 @@ class Experiments {
                     experiment.variantName !== '';
 
                 if (validExperiment) {
-                    const featuresList = this.getFeaturesMap(experiment.experimentName,
+                    const featuresList = this.getVariantState(experiment.experimentName,
                         experiment.variantName);
                     return {
                         ...oldFeaturesList,
@@ -128,10 +126,15 @@ class Experiments {
     }
 
     /**
-     * @param {Array<string>} fieldsList
+     * Gets a list of live experiments by invoking each experiment's getLiveExperiment method.
+     * @param {Array<string>?} fieldsList
      * @returns {Promise<Array<{[key]: string}>>}
      */
-    getLiveExperiments(fieldsList) {
+    getLiveExperiments(fieldsList = []) {
+        // When isOff flag is set to true, an empty live experiments list is resolved.
+        if (this._config.isOff) {
+            return Promise.resolve([]);
+        }
         // Return a list of promises that is derived from a list of returned getLiveExperiment of
         // each of the registered experiments.
         return Promise.all(Object.keys(this._experiments).map((experimentName) => {
@@ -202,27 +205,31 @@ class Experiments {
     /**
      *
      * @param {{ prefix?: string, [key]: value}?} config
-     * @param {Array<{name: string, variants?: Array<{name: string, featureToggles?: {[key]: boolean}}>}>} experiments
+     * @param {Array<{name: string, variants?: Array<{name: string, featureToggles?: {[key]:
+     *     boolean}}>}>} experiments
      * @return {Experiments}
      */
     static defineByObject({ config = {}, experiments = [] }) {
         try {
             const experimentsDef = Experiments.define(config);
-            for (const experimentObj of experiments) {
-                const experiment = Experiment.define(experimentObj.name);
+            for (const { experimentName, experimentConfig = {}, variants = [] } of experiments) {
+                const experiment = Experiment.define(experimentName, experimentConfig);
                 // If experiment object has variants defined, create them
-                if (Array.isArray(experimentObj.variants)) {
-                    for (const variantObj of experimentObj.variants) {
-                        const variant = Variant.define(variantObj.name,
-                            variantObj.featureToggles || {});
-                        experiment.addVariant(variant);
+                if (Array.isArray(variants)) {
+                    for (const { variantName, variantState = {}, variantConfig = {} } of
+                        variants) {
+                        experiment.addVariant(
+                            Variant.define(variantName, variantState, variantConfig)
+                        );
                     }
                 }
                 experimentsDef.addExperiment(experiment);
             }
             return experimentsDef;
         } catch (err) {
-            console.error('There was an error trying to create Experiments\r\nReturning empty experiments object.', err);
+            console.error(
+                'There was an error trying to create Experiments\r\nReturning empty experiments object.',
+                err);
             return Experiments.define();
         }
     }
