@@ -1,0 +1,59 @@
+{
+  "config": {
+    "some": "config"
+  },
+  "experiments": [
+    {
+      "name": "First Experiment",
+      "variants": [
+        {
+          "name": "control",
+          "state": {
+            "prop1": "show",
+            "prop2": "hide"
+          }
+        },
+        {
+          "name": "variantA",
+          "state": {
+            "prop1": "hide",
+            "prop2": "show"
+          }
+        },
+        {
+          "name": "variantB",
+          "state": {
+            "prop1": "show",
+            "prop2": "show"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Second Experiment",
+      "variants": [
+        {
+          "name": "control",
+          "state": {
+            "prop3": "show",
+            "prop4": "hide"
+          }
+        },
+        {
+          "name": "variantA",
+          "state": {
+            "prop3": "hide",
+            "prop4": "show"
+          }
+        },
+        {
+          "name": "variantB",
+          "state": {
+            "prop3": "show",
+            "prop4": "show"
+          }
+        }
+      ]
+    }
+  ]
+}

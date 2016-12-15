@@ -194,7 +194,7 @@ class Experiments {
     }
 
     /**
-     * @param {{[key]: *}?} config
+     * @param {{isOff: boolean, [key]: *}?} config
      * @returns {Experiments}
      */
     static define(config) {
