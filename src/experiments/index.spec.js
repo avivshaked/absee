@@ -215,6 +215,7 @@ test('getLiveExperiments: should return an empty array if any of the registered 
     const experiment2 = Experiment.define('secondExperiment');
     const experiment3 = Experiment.define('thirdExperiment');
     sinon.stub(experiment1, 'getLiveExperiment', () => Promise.resolve('firstExperiment'));
+    sinon.stub(experiment2._logger, 'error');
     sinon.stub(experiment2, 'getLiveExperiment', () => {
         throw new Error();
     });

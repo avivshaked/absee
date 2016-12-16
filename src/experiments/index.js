@@ -148,7 +148,7 @@ class Experiments {
                 liveExperiment => liveExperiment !== null))
             // On error return an empty array
             .catch((err) => {
-                console.log(
+                this._logger.error(
                     'Experiments: getLiveExperiments: An error has occurred. ' +
                     'Returning an empty array',
                     err);

@@ -87,7 +87,7 @@ class Experiment {
     /**
      *
      * @param {string} name
-     * @param {{logger?: Object, [key]: *}?} config
+     * @param {{logger?: Object, isOff: boolean?, [key]: *}?} config
      */
     constructor(name, config = {}) {
         const errMsg = `${this._errMsg} constructor:`;
@@ -124,6 +124,9 @@ class Experiment {
      * @returns {boolean}
      */
     get condition() {
+        if (this._config.isOff) {
+            return false;
+        }
         if (typeof this._condition === 'function') {
             if (this._conditionContext) {
                 return !!this._condition(this._conditionContext);
@@ -139,7 +142,7 @@ class Experiment {
     /**
      * Defines a new Experiment
      * @param {string} name
-     * @param {{[key]: *}?} config
+     * @param {{logger?: Object, isOff: boolean?, [key]: *}?} config
      * @returns {Experiment}
      */
     static define(name, config) {

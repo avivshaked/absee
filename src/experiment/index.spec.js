@@ -159,6 +159,11 @@ test('setConditionContext: should return the experiment instance', (t) => {
     t.is(experiment.setConditionContext('some context'), experiment);
 });
 
+test('get condition: should return false if config has isOff set to true', (t) => {
+    const experiment = Experiment.define('experiment', { isOff: true });
+    t.is(experiment.condition, false);
+});
+
 test('get condition: should return true if no condition was set', (t) => {
     const experiment = Experiment.define('experiment');
     t.is(experiment.condition, true);
@@ -250,6 +255,7 @@ test('getLiveVariant: should return a promise that resolves to getVariantFn', as
 
 test('getLiveExperiment: should return null if there is an error in getVariantFn', async (t) => {
     const experiment = Experiment.define('experiment');
+    sinon.stub(experiment._logger, 'error');
     experiment._variantProvider = () => {
         throw new Error();
     };
