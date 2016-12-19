@@ -1,15 +1,18 @@
 {
   "name": "absee",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "A library for constructing ab-tests",
   "main": "dist/index.js",
   "directories": {
   },
+  "engines": {
+    "node": ">= 7.2.0",
+    "npm": ">= 3.10.9"
+  },
   "scripts": {
     "test": "ava",
     "lint": "./node_modules/.bin/eslint ./src/**/*.js",
-    "build": "webpack",
-    "build-dev": "NODE_ENV=development webpack"
+    "build": "NODE_ENV=production webpack && NODE_ENV=development webpack"
   },
   "repository": {
     "type": "git",
