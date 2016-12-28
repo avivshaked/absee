@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import Experiment from '../experiment/index';
 import Variant from '../variant/index';
+import objectDeepMerge from '../utils/object-deep-merge';
 
 class Experiments {
 
@@ -113,10 +114,7 @@ class Experiments {
                 if (validExperiment) {
                     const featuresList = this.getVariantState(experiment.experimentName,
                         experiment.variantName);
-                    return {
-                        ...oldFeaturesList,
-                        ...featuresList,
-                    };
+                    return objectDeepMerge(oldFeaturesList, featuresList);
                 }
                 return oldFeaturesList;
             }, {});
