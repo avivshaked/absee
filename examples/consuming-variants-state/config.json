@@ -1,0 +1,48 @@
+{
+  "experiments": [
+    {
+      "name": "FeatureA",
+      "variants": [
+        {
+          "name": "control"
+        },
+        {
+          "name": "VariantA",
+          "state": {
+            "FeatureAProp1": "hide",
+            "FeatureAProp2": "show"
+          }
+        },
+        {
+          "name": "VariantB",
+          "state": {
+            "FeatureAProp1": "show",
+            "FeatureAProp2": "show"
+          }
+        }
+      ]
+    },
+    {
+      "name": "FeatureB",
+      "variants": [
+        {
+          "name": "control"
+        },
+        {
+          "name": "VariantA",
+          "state": {
+            "FeatureBProp1": "hide",
+            "FeatureBProp2": "show"
+          }
+        },
+        {
+          "name": "VariantB",
+          "state": {
+            "FeatureBProp1": "show",
+            "FeatureBProp2": "show"
+          }
+        }
+      ]
+    }
+  ]
+}

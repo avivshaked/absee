@@ -11,6 +11,7 @@ Table of contents
 * [Getting started](#getting-started)
     * [Creating experiments construct with explicit chaining](#creating-experiments-construct-with-explicit-chaining)
     * [Creating experiments construct with config object](#creating-experiments-construct-with-config-object)
+    * [How to consume the variants states](#how-to-consume-the-variants-states)
 * [License](#License)
 
 
@@ -109,6 +110,23 @@ const experiments = Experiments.defineByObject(experimentsConfig);
 ```
 
 You can find an example in 'examples/creating-constructs-config-object/index.js'
+
+### How to consume the variants states
+Having experiments construct is the first phase. Once a construct is in place, in various times and
+places in your app, you might want to get the specific state that is set for an experiment's 
+specific variant.
+To do this you need to call `getVariantState` on an experiments instance. This will return a clone
+of the original variant state.
+
+The function's signature: `getVariantState({string} experimentName, {string} variantName)`
+
+You might have a need to get more than one experiment state. You might have more than one test
+running. In that case you should call `getExperimentsState` method. This method will return a merge
+state of all the experiments variants.
+
+The function's signature: `getExperimentsState(Array<{experimentName: string, variantName: string}>)`
+
+You can find an example in 'examples/consuming-variants-state/index.js'
 
 ## License
 
