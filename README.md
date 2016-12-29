@@ -269,6 +269,42 @@ experiments
 ```
 You can find examples in 'examples/variant-provider-context'
 
+### Setting condition and condition context
+In most cases you would want the test to run under a specific condition only. For example, if the
+user is coming from a mobile device and not from desktop, or if the user has some cookie or header,
+or even more complex conditions. ABSee allows setting a condition or a condition function for each
+experiment. It also allows setting context for each experient, or globally. `getLiveVariant` method 
+(on an experiment instance) will evaluate the condition against the context (if provided), and if 
+it is evaluated to false, the method will return null. `getLiveExperiment` is using `getLiveVariant`
+internally, so it is also affected by the condition.
+
+if you are using `experiments.getLiveExperiments`, that method filters out all null liveExperiments,
+so it would basically filter out all experients that have a condition that evaluates false.
+
+Here's an example:
+```js
+// Assuming experiments instance has been defined, experiment instance has been defined, 
+// and variantProviderFn has been defined
+experiment.setVariantProvider(variantProviderFn);
+
+// now we will set the condition function
+experiment.setCondition((context) => {
+    return context.device === 'mobile';
+});
+// now before making the call to get the live experiments we set context (probably in a different file)
+// Assuming there is variant provider context object defined, and assuming there is a request object
+// with device property
+experiments
+    .setVariantProviderContext(variantProviderContext)
+    .setConditionContext({device: request.device })
+    .getLiveExperiments(['someField', {variant: 'variantName'}])
+    .then(experiments.getExperimentsState)
+    .then((experimentsState) => {
+        // Do something with the experiments state
+    });
+```
+You can find examples in 'examples/setting-condition-and-context'
+
 
 ## License
 

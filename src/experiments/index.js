@@ -175,6 +175,7 @@ class Experiments {
                     this._experiments[experimentName].setVariantProviderContext(context);
                 }
             );
+        return this;
     }
 
     /**
@@ -189,6 +190,7 @@ class Experiments {
                     this._experiments[experimentName].setConditionContext(context);
                 }
             );
+        return this;
     }
 
     /**
