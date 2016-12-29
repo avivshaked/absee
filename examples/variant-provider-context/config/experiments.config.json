@@ -1,0 +1,24 @@
+{
+  "experiments": [
+    {
+      "name": "ShoppingCartColor",
+      "variants": [
+        {
+          "name": "control"
+        },
+        {
+          "name": "BlackShoppingCart",
+          "state": {
+            "shoppingCartColor": "rgb(0,0,0)"
+          }
+        },
+        {
+          "name": "WhiteShoppingCart",
+          "state": {
+            "shoppingCartColor": "rgb(255, 255, 255)"
+          }
+        }
+      ]
+    }
+  ]
+}

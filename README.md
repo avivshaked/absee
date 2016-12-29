@@ -239,6 +239,36 @@ experiments.getLiveExperiments(['metaDataB', {variant: 'variantName'}])
 ```
 You can find examples in 'examples/live-experiments'
 
+### Setting variant provider context
+When providing argument to the variant provider service, some arguments might be constant. For 
+example: an experiment name, or an experiment id. Some arguments might vary for each call to the
+variant provider service. For example: Customer id, which changes for each request.
+ABSee offers a way to add variant provider context. The variantProvider will then be called with the
+provided context as its argument.
+
+Here's an example:
+```js
+const experimentId = 'someId';
+function variantProviderFn(context) {
+    // Assuming there is a service to het variants the gets an experiments id and a customer id
+    return getVariantService(experimentId, context.customerId);
+}
+// Assuming experiments instance has been defined, and experiment instance has been defined
+experiment.setVariantProvider(variantProviderFn);
+
+// now before making the call to get the live experiments we set context (probably in a different file)
+// Assuming we have some request object with customerId on it
+experiments
+    .setVariantProviderContext({customerId: request.customerId})
+    .getLiveExperiments(['someField', {variant: 'variantName'}])
+    .then(experiments.getExperimentsState)
+    .then((experimentsState) => {
+        // Do something with the experiments state
+    });
+
+
+```
+
 
 ## License
 
