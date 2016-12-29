@@ -11,7 +11,10 @@ Table of contents
 * [Getting started](#getting-started)
     * [Creating experiments construct with explicit chaining](#creating-experiments-construct-with-explicit-chaining)
     * [Creating experiments construct with config object](#creating-experiments-construct-with-config-object)
-    * [How to consume the variants states](#how-to-consume-the-variants-states)
+    * [Consuming variants state](#consming-variant-state)
+    * [Variant Provider](#variant-provider)
+    * [Setting variant provider](#setting-variant-provider)
+    * [Getting live experiment and state](#getting-live-experiment-and-state)
 * [License](#License)
 
 
@@ -111,7 +114,7 @@ const experiments = Experiments.defineByObject(experimentsConfig);
 
 You can find an example in 'examples/creating-constructs-config-object/index.js'
 
-### How to consume the variants states
+### Consuming variants state
 Having experiments construct is the first phase. Once a construct is in place, in various times and
 places in your app, you might want to get the specific state that is set for an experiment's 
 specific variant.
@@ -127,6 +130,115 @@ state of all the experiments variants.
 The function's signature: `getExperimentsState(Array<{experimentName: string, variantName: string}>)`
 
 You can find an example in 'examples/consuming-variants-state/index.js'
+
+
+
+### Variant Provider
+A variant provider is a service or a method that should return a variant based on an assignment key 
+mapping, and/or a condition or set of conditions. The service, should always return the same variant 
+for a specific assignment key and condition outcome. It is not an imperative, but usually A/B test 
+need a constant for the results of an experiment to mean anything. 
+Here's an example; If the assignment key is a customer id then for a specific customer id, the same
+variant name should always be returned by the variant provider service.
+
+The assignment key can be anything, as can the conditions be. It is implementation based. In fact,
+as far as ABSee is concerned, it doesn't care at all how a variant provider works, as long as it can
+get an experiment name and a variant name to produce a state.
+
+
+### Setting variant provider
+As mentioned before, ABSee is agnostic to the variant provider, or to the variant provider 
+implementation. It does however provide a way to integrate the variant provider service into the 
+construct.
+
+Once you define an Experiment, or Experiments construct, you can add a variant provider method or
+service to each experiment.
+
+To add a service provider you use an Experiment instance's `setVariantProvider` method.
+```js
+
+// Assuming an Experiment has been defined
+function variantProviderFn () {/** some logic here that returns some object with variant name **/}
+experiment.setVariantProvider(variantProviderFn);
+
+```
+You can find examples in 'examples/live-experiments'
+
+
+### Getting live experiment and state
+To get the 'live experiment', ie the object that describes what is the current variant, you can 
+call `experiment.getLiveExperiment()` to get a specific experiment's 'live experiment', or you can use
+`experiments.getLiveExperiments()` to get all current 'live experiments'. Both methods accept a list
+of field names, and those properties will be mapped to the object (or list of objects)
+that is produced in `getLiveExperiment` method. These methods return a promise, so from the point of
+calling these methods, the code will become asynchronous in nature.
+
+Here's an example. Lets say that variantProviderFn returns an object with the following schema:
+```schema
+{
+    "variant": string,
+    "metaDataA": any,
+    "metaDataB": any
+}
+```
+So you would definitely want to capture the variant and maybe one of the meta datas. In this case you
+would call `getLiveExperiment` or `getLiveExperiments` with a list of mapped properties, like this:
+```js
+experiment.getLiveExperiment(['variant', 'metaDataB']);
+```
+
+The outcome will be an object that looks like this:
+```json
+{
+  "experimentName": "the experiment name",
+  "variant": "the variant name",
+  "metaDataB": "some meta data"
+}
+```
+"experimentName" is the only default property, and it is not taken from `variantProviderFn` returned 
+object, but directly from the experiment construct. The other values in the object were mapped using
+the fieldList provided in the call to `getLiveExperiment`.
+So if you would like to get the state of a single experiment then once you have the 'liveExperiment'
+you can call `experiment.getVariantState` like this:
+```js
+// Assuming an Experiment has been defined
+function variantProviderFn () {/** some logic here that returns some object with variant name **/}
+experiment
+    .setVariantProvider(variantProviderFn)
+    .getLiveExperiment(['variant', 'metaDataB'])
+        .then((liveExperiment) => experiment.getVariantState(liveExperiment.variant));
+    
+// the 'setVariantProvider' method and 'getLiveExperiment' do not have to be chained.
+```
+
+However, you might want to call `experimets.getExperimentsState` to get all the running experiments
+state. In this case you need to pass a list of objects with strict schema; 
+Array<{experimentName: string, variantName: string}> .
+In this case you need to either take the response from getLiveExperiments and do some additional 
+processing to turn "variant" prop to "variantName", or use another feature of fieldsList argument.
+Instead of passing a string, you pass an object with keys and values, where the keys are the fields
+in the object that the variantProvider returns, and the values are the names of the properties of
+the returned object from `getLiveExperiment`.
+Here's and example:
+```js
+// Assuming an Experiment has been defined, and a variant provider has been set
+experiments.getLiveExperiments(['metaDataB', {variant: 'variantName'}])
+    .then((liveExperiments) => {
+        /** This will return an array of objects that have this schema:
+        {
+              "experimentName": "the experiment name",
+              "variantName": "the variant name",
+              "metaDataB": "some meta data"
+        }
+        **/
+        // So this can be passed directly as-is to experiments.getExperimentsState
+        return experiments.getExperimentsState(liveExperiments);
+    });
+// So now this method will resolve on the combined state of all live experiments currently running
+
+```
+You can find examples in 'examples/live-experiments'
+
 
 ## License
 
