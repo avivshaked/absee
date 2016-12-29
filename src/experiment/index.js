@@ -261,7 +261,7 @@ class Experiment {
 
     /**
      * Returns an object that describes the current "live" experiment.
-     * @param {Array<string>?} fieldsList
+     * @param {Array<string|{[key]:string}>?} fieldsList
      * @returns {Promise.<{experimentName: string, variantName: string}>|null}
      */
     getLiveExperiment(fieldsList = []) {
@@ -273,9 +273,15 @@ class Experiment {
                 if (!variant) {
                     return null;
                 }
-                const additionalFields = fieldsList.reduce((obj, fieldName) => {
+                const additionalFields = fieldsList.reduce((obj, field) => {
                     /* eslint-disable no-param-reassign */
-                    obj[fieldName] = variant[fieldName];
+                    if (typeof field === 'object') {
+                        Object.keys(field).forEach((fieldName) => {
+                            obj[field[fieldName]] = variant[fieldName];
+                        });
+                    } else {
+                        obj[field] = variant[field];
+                    }
                     /* eslint-enable no-param-reassign */
                     return obj;
                 }, {});

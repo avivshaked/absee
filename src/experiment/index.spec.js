@@ -301,6 +301,20 @@ test('getLiveExperiment: should return an object with the experiment name and re
         });
     });
 
+test('getLiveExperiment: should return an object with mapped fields',
+    async (t) => {
+        const experiment = Experiment.define('experiment');
+        sinon.stub(experiment, 'getLiveVariant', () => {
+            return { a: 'some value', b: 'some other value' };
+        });
+        const res = await experiment.getLiveExperiment(['b', { a: 'notAsA' }]);
+        t.deepEqual(res, {
+            experimentName: 'experiment',
+            b: 'some other value',
+            notAsA: 'some value',
+        });
+    });
+
 test('getVariantState: should return variant.state', (t) => {
     const experiment = Experiment.define('experiment');
     const state1 = { state: 1 };

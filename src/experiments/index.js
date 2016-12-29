@@ -125,7 +125,7 @@ class Experiments {
 
     /**
      * Gets a list of live experiments by invoking each experiment's getLiveExperiment method.
-     * @param {Array<string>?} fieldsList
+     * @param {Array<string|{[key]:string}>?} fieldsList
      * @returns {Promise<Array<{[key]: string}>>}
      */
     getLiveExperiments(fieldsList = []) {
