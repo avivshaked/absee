@@ -15,6 +15,7 @@ Table of contents
     * [Variant Provider](#variant-provider)
     * [Setting variant provider](#setting-variant-provider)
     * [Getting live experiment and state](#getting-live-experiment-and-state)
+    * [Setting variant provider context](#setting-variant-provider-context)
 * [License](#License)
 
 
@@ -265,9 +266,8 @@ experiments
     .then((experimentsState) => {
         // Do something with the experiments state
     });
-
-
 ```
+You can find examples in 'examples/variant-provider-context'
 
 
 ## License
