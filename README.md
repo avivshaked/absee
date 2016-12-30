@@ -16,6 +16,8 @@ Table of contents
     * [Setting variant provider](#setting-variant-provider)
     * [Getting live experiment and state](#getting-live-experiment-and-state)
     * [Setting variant provider context](#setting-variant-provider-context)
+    * [Setting condition and condition context](#setting-condition-and-condition-context)
+    * [Switching off experiments](#switching-off-experiments)
 * [License](#License)
 
 
@@ -76,32 +78,32 @@ The object can have a config property, and must have an experiments property.
 Experiments property is an array of objects, where each object is an experiment definition object.
 ```js
 const experimentsConfig = {
-    "config": {
-      "some": "config"
+    config: {
+      some: "config"
     },
-    "experiments": [
+    experiments: [
       {
-        "name": "First Experiment",
-        "variants": [
+        name: "First Experiment",
+        variants: [
           {
-            "name": "control",
-            "state": {
-              "prop1": "show",
-              "prop2": "hide"
+            name: "control",
+            state: {
+              prop1: "show",
+              prop2: "hide"
             }
           },
           {
-            "name": "variantA",
-            "state": {
-              "prop1": "hide",
-              "prop2": "show"
+            name: "variantA",
+            state: {
+              prop1: "hide",
+              prop2: "show"
             }
           },
           {
-            "name": "variantB",
-            "state": {
-              "prop1": "show",
-              "prop2": "show"
+            name: "variantB",
+            state: {
+              prop1: "show",
+              prop2: "show"
             }
           }
         ]
@@ -136,8 +138,8 @@ You can find an example in 'examples/consuming-variants-state/index.js'
 
 ### Variant Provider
 A variant provider is a service or a method that should return a variant based on an assignment key 
-mapping, and/or a condition or set of conditions. The service, should always return the same variant 
-for a specific assignment key and condition outcome. It is not an imperative, but usually A/B test 
+mapping, and/or a condition or set of conditions. The service should always return the same variant 
+for a specific assignment key and condition outcome. It is not an imperative, but usually A/B tests 
 need a constant for the results of an experiment to mean anything. 
 Here's an example; If the assignment key is a customer id then for a specific customer id, the same
 variant name should always be returned by the variant provider service.
@@ -251,7 +253,7 @@ Here's an example:
 ```js
 const experimentId = 'someId';
 function variantProviderFn(context) {
-    // Assuming there is a service to het variants the gets an experiments id and a customer id
+    // Assuming there is a service to get variants, that takes an experiment id and a customer id
     return getVariantService(experimentId, context.customerId);
 }
 // Assuming experiments instance has been defined, and experiment instance has been defined
@@ -273,13 +275,13 @@ You can find examples in 'examples/variant-provider-context'
 In most cases you would want the test to run under a specific condition only. For example, if the
 user is coming from a mobile device and not from desktop, or if the user has some cookie or header,
 or even more complex conditions. ABSee allows setting a condition or a condition function for each
-experiment. It also allows setting context for each experient, or globally. `getLiveVariant` method 
-(on an experiment instance) will evaluate the condition against the context (if provided), and if 
-it is evaluated to false, the method will return null. `getLiveExperiment` is using `getLiveVariant`
-internally, so it is also affected by the condition.
+experiment. It also allows setting condition context for each experiment, or globally. 
+`getLiveVariant` method (on an experiment instance) will evaluate the condition against the context 
+(if provided), and if it is evaluated to false, the method will return null. `getLiveExperiment` is 
+using `getLiveVariant` internally, so it is also affected by the condition.
 
 if you are using `experiments.getLiveExperiments`, that method filters out all null liveExperiments,
-so it would basically filter out all experients that have a condition that evaluates false.
+so it would basically filter out all experiments that have a condition that evaluates to false.
 
 Here's an example:
 ```js
@@ -288,9 +290,7 @@ Here's an example:
 experiment.setVariantProvider(variantProviderFn);
 
 // now we will set the condition function
-experiment.setCondition((context) => {
-    return context.device === 'mobile';
-});
+experiment.setCondition(context => context.device === 'mobile');
 // now before making the call to get the live experiments we set context (probably in a different file)
 // Assuming there is variant provider context object defined, and assuming there is a request object
 // with device property
@@ -298,14 +298,86 @@ experiments
     .setVariantProviderContext(variantProviderContext)
     .setConditionContext({device: request.device })
     .getLiveExperiments(['someField', {variant: 'variantName'}])
-    .then(experiments.getExperimentsState)
+    .then(liveExperiments => experiments.getExperimentsState(liveExperiments))
     .then((experimentsState) => {
         // Do something with the experiments state
     });
 ```
 You can find examples in 'examples/setting-condition-and-context'
 
+### Switching off experiments
+You might want to develop experiments, deploy to production, but switch off all experiments, or a
+specific one. Perhaps the A/B test is a part of the feature's DOD, but you are not yet
+ready to run the test for whatever reason. Perhaps you want to switch off the experiment easily 
+without purging it from the code base. ABSee allows you to pass a configuration object when building
+the experiments construct, or when defining a specific experiment.
+Pass an "isOff" property set to true in Experiments' config object and all experiments will not
+fetch a variant. Pass an "isOff" property set to true in an Experiment's config and that specific
+config will not fetch a variant.
+It is important to understand what is affected by that flag. When set in a specific experiment, it
+becomes part of the condition. That means that the variantProvider function will never run, and thus
+`getLiveVariant` will resolve to null. However, `getVariantState` works regardless of that flag. 
+When passing the flag to Experiments config (not a specific one), `getLiveExperiments` checks for
+that flag and if it's set to true, the method resolves to an empty array.
 
+Here's an example for settings isOff globally:
+```js
+const experimentsConfig = {
+    config: {
+      isOff: true
+    },
+    experiments: [
+      {
+        name: "First Experiment",
+        variants: [
+          {
+            name: "control"
+          },
+          {
+            name: "variantA",
+            state: {
+              prop1: "hide",
+              prop2: "show"
+            }
+          }
+        ]
+      }
+    ]
+  };
+
+const experiments = Experiments.defineByObject(experimentsConfig);
+
+```
+
+Here's an example for setting isOff for a specific experiment
+Here's an example for settings isOff globally:
+```js
+const experimentsConfig = {
+    experiments: [
+      {
+        config: {
+          isOff: true  
+        },  
+        name: "First Experiment",
+        variants: [
+          {
+            name: "control"
+          },
+          {
+            name: "variantA",
+            state: {
+              prop1: "hide",
+              prop2: "show"
+            }
+          }
+        ]
+      }
+    ]
+  };
+
+const experiments = Experiments.defineByObject(experimentsConfig);
+
+```
 ## License
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
